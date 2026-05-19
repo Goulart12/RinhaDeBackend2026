@@ -1,0 +1,7 @@
+﻿services:
+  rinhadebackend2026:
+    image: rinhadebackend2026
+    build:
+      context: .
+      dockerfile: RinhaDeBackend2026/Dockerfile
+
