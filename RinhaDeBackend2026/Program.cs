@@ -1,10 +1,49 @@
+using System.Text.Json;
+using RinhaDeBackend2026.Models.Dataset;
+using RinhaDeBackend2026.Services;
+using RinhaDeBackend2026.Services.Dataset;
+using RinhaDeBackend2026.Services.Fraud;
+using RinhaDeBackend2026.Services.Search;
+using RinhaDeBackend2026.Services.Vectorization;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.AddServerHeader = false;
+});
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
+});
+
+builder.Services.Configure<DatasetOptions>(
+    builder.Configuration.GetSection("Dataset"));
+
+builder.Services.AddSingleton<
+    IVectorizationService,
+    VectorizationService>();
+
+builder.Services.AddSingleton<
+    IDatasetLoader,
+    DatasetLoader>();
+
+builder.Services.AddSingleton<
+    IKnnSearchService,
+    KnnSearchService>();
+
+builder.Services.AddSingleton<
+    IFraudScoringService,
+    FraudScoringService>();
+
 var app = builder.Build();
+
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -13,29 +52,4 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-    {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
-    })
-    .WithName("GetWeatherForecast");
-
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
